@@ -33,6 +33,7 @@
 	},
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
+		"prepare": "tsc -p tsconfig.build.json",
 		"typecheck": "tsc --noEmit",
 		"test": "node --test src/*.test.ts",
 		"verify": "npm run typecheck && npm test && npm run build"
