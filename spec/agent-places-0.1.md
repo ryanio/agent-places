@@ -1,10 +1,80 @@
 # Agent Places 0.1
 
-Draft. This repository is the spec's home: the text below, the [JSON schemas](../schemas), the [test vectors](../vectors/vectors.json) and the [reference library](../src/index.ts). musegod.org is its first implementation, for the 999 MUSEGOD Muses, and its examples are taken from there; the copy at musegod.org/docs/sync follows this one. The text is CC0: copy it, run it, change it.
+Draft. This repository is the spec's home: the text below, the [JSON schemas](../schemas), the [test vectors](../vectors/vectors.json) and the [reference library](../src/index.ts). musegod.org is its first implementation, for the 999 MUSEGOD Muses, and its examples are taken from there; musegod.org/docs/sync is built from this file. The text is CC0: copy it, run it, change it.
 
 Agent Places is an open spec for where agent NFTs live across the web. A place says which tokens live there, signed with its own key. A holder proves a token is theirs, signed with their wallet. The chain says who holds each token, and nobody else gets a say in that.
 
 This is draft 0.1. musegod.org runs the collection's half of it for the 999 Muses, and the flock, Terrakin and HiveVerse send their half today. Nothing in it is particular to the Muses. A place that reports to one collection reports to the next by changing two words, and any collection can run the same endpoints on its own site. [https://musegod.org/places](https://musegod.org/places) is the short version.
+
+## Start here
+
+Most people arrive with one of three jobs. Each is a few minutes from a first test.
+
+### Run a place
+
+A place is anywhere tokens show up: a game, a town, a social network for agents, a marketplace. Four steps get it reporting to a collection:
+
+1. Make a keypair for the place. Any secp256k1 key works. Keep the private half as a secret in your deployment, never in code or a log.
+2. Serve your own file at `/.well-known/agent-places.json` (see A place's own file, below). The library writes it:
+
+```ts
+// npm install github:ryanio/agent-places
+import { placeFile } from 'agent-places'
+
+const file = placeFile(
+  'https://agora.example',
+  {
+    id: 'agora',
+    name: 'Agora',
+    home: 'https://agora.example/',
+    page: '^https:\\/\\/agora\\.example\\/m\\/\\d{1,6}$',
+    what: 'A square where agents trade stories.',
+  },
+  [process.env.PLACE_KEY],
+)
+// Serve JSON.stringify(file) at https://agora.example/.well-known/agent-places.json
+```
+
+3. Ask the collection to add you. This checks your file, then sends your origin to the collection's `register`:
+
+```sh
+npx -y github:ryanio/agent-places register https://musegod.org https://agora.example
+```
+
+4. Once a person there approves it, report when something changes, and try each kind first with `?dry=1`, which runs every check and stores nothing:
+
+```ts
+import { report } from 'agent-places'
+
+const body = report({
+  key: process.env.PLACE_KEY,
+  place: 'agora',
+  naming: { item: 'muse', word: 'MUSEGOD' },
+  token: 947,
+  event: 'joined',
+  url: 'https://agora.example/m/41',
+})
+const res = await fetch('https://musegod.org/api/v1/muses/947/worlds?dry=1', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify(body),
+})
+console.log(res.status, await res.json()) // 200 with "dry": true means it would be taken
+```
+
+Before going live, read [Being a good sender](#being-a-good-sender): send on a change, not on every visit, and read your own health to see how your reports went.
+
+### Run a collection
+
+A collection of agent NFTs runs the receiving half: a discovery file, one endpoint that takes reports, a registry of places, and the record read back. [Finding a collection](#finding-a-collection) is the file and [Running the receiving half](#running-the-receiving-half) the checks, in order. The [test vectors](https://github.com/ryanio/agent-places/blob/main/vectors/vectors.json) let you check your signing and recovery against known answers before any place sends you anything.
+
+### Hand it to a coding agent
+
+The spec is written to be implemented from the text alone: every line to sign is given exactly, every body has a JSON schema, and the dry run answers as a real report would. To have an agent build the sending half for your place, give it this, with your place filled in:
+
+```text
+Implement the sending half of Agent Places for <my place>, reporting MUSEGOD Muses to musegod.org. The spec is https://raw.githubusercontent.com/ryanio/agent-places/main/spec/agent-places-0.1.md and everything the collection needs from us is in https://musegod.org/.well-known/agent-places.json. Use the agent-places library (npm install github:ryanio/agent-places). Keep the place's key as a deployment secret, never in code, a log or a command line. Serve our place file, report only on a change (joined, linked, active, did, left) after the change has committed, try every kind of report with ?dry=1 until it answers 200, then ask to be added with npx agent-places register https://musegod.org <our origin> and read https://musegod.org/api/v1/places/<our id>/health once live.
+```
 
 ## The parts
 

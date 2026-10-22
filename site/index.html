@@ -68,6 +68,10 @@ input { flex: 1 1 260px; min-width: 0; min-height: 44px; padding: 0 14px; border
 #out .ok { color: var(--good); }
 #out .no { color: var(--bad); }
 pre { margin: 0; padding: 14px; border-radius: 14px; background: var(--card); box-shadow: 0 0 0 1px var(--line); overflow-x: auto; }
+pre.wrap { white-space: pre-wrap; overflow-wrap: anywhere; }
+ol.steps { margin: 0; padding: 0 0 0 22px; display: grid; gap: 14px; color: var(--soft); }
+ol.steps b { color: var(--ink); }
+ol.steps pre { margin-top: 8px; }
 footer p { font-size: 14px; color: var(--dim); }
 </style>
 </head>
@@ -78,7 +82,8 @@ footer p { font-size: 14px; color: var(--dim); }
     <h1>Agent Places</h1>
     <p class="lede">Where agent NFTs live across the web, and what they do there: told by the places themselves, proved by their holders, and settled by the chain.</p>
     <p class="go">
-      <a class="btn" href="https://github.com/ryanio/agent-places/blob/main/spec/agent-places-0.1.md">Read the spec</a>
+      <a class="btn" href="#build">Start building</a>
+      <a class="btn quiet" href="https://github.com/ryanio/agent-places/blob/main/spec/agent-places-0.1.md">Read the spec</a>
       <a class="btn quiet" href="#check">Check a place</a>
       <a class="btn quiet" href="https://github.com/ryanio/agent-places">GitHub</a>
     </p>
@@ -115,10 +120,15 @@ footer p { font-size: 14px; color: var(--dim); }
     </ul>
   </section>
 
-  <section>
-    <div class="head"><p class="label">build on it</p><h2>For places and collections.</h2></div>
-    <pre><code>npm install agent-places
-
+  <section id="build">
+    <div class="head"><p class="label">build on it</p><h2>Run a place in four steps.</h2><p>A game, a town, a network for agents, a marketplace: if agent NFTs show up there, you can report them.</p></div>
+    <ol class="steps">
+      <li><b>Make a key.</b> Any secp256k1 keypair, its private half a secret in your deployment.</li>
+      <li><b>Serve your file</b> at <code>/.well-known/agent-places.json</code>: your id, the shape of a token's page with you, and your key signing that it's yours. <code>placeFile()</code> in the library writes it.</li>
+      <li><b>Ask the collection.</b> One command checks your file and sends your origin; you're live once a person there approves it.
+        <pre><code>npx -y github:ryanio/agent-places register https://musegod.org https://&lt;your site&gt;</code></pre></li>
+      <li><b>Report on a change.</b> One signed POST when a token joins, is linked, does something or leaves. Add <code>?dry=1</code> to try it first.
+        <pre><code>// npm install github:ryanio/agent-places
 import { report } from 'agent-places'
 
 const body = report({
@@ -126,15 +136,26 @@ const body = report({
   place: 'agora',
   naming: { item: 'muse', word: 'MUSEGOD' },
   token: 947,
-  event: 'did',
-  url: 'https://agora.example/m/123',
-  did: { what: 'minted', title: 'Mini Sprout', ref: 'm123' },
-})</code></pre>
-    <p>The <a href="https://github.com/ryanio/agent-places/tree/main/schemas">JSON schemas</a> cover every file and body, and the <a href="https://github.com/ryanio/agent-places/blob/main/vectors/vectors.json">test vectors</a> sign every line, so an implementation in any language can check itself.</p>
+  event: 'joined',
+  url: 'https://agora.example/m/41',
+})
+await fetch('https://musegod.org/api/v1/muses/947/worlds?dry=1', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify(body),
+})</code></pre></li>
+    </ol>
+    <p>Running a collection instead? The spec's <a href="https://github.com/ryanio/agent-places/blob/main/spec/agent-places-0.1.md#running-the-receiving-half">receiving half</a> is the checks in order. The <a href="https://github.com/ryanio/agent-places/tree/main/schemas">JSON schemas</a> cover every file and body, and the <a href="https://github.com/ryanio/agent-places/blob/main/vectors/vectors.json">test vectors</a> sign every line, so an implementation in any language can check itself.</p>
+  </section>
+
+  <section>
+    <div class="head"><p class="label">for agents</p><h2>Hand it to your coding agent.</h2><p>Every line to sign is in the spec word for word, so an agent can build the sending half from the text alone. Paste it this, with your place filled in:</p></div>
+    <pre class="wrap" id="prompt"><code>Implement the sending half of Agent Places for &lt;my place&gt;, reporting MUSEGOD Muses to musegod.org. The spec is https://raw.githubusercontent.com/ryanio/agent-places/main/spec/agent-places-0.1.md and everything the collection needs from us is in https://musegod.org/.well-known/agent-places.json. Use the agent-places library (npm install github:ryanio/agent-places). Keep the place's key as a deployment secret, never in code, a log or a command line. Serve our place file, report only on a change (joined, linked, active, did, left) after the change has committed, try every kind of report with ?dry=1 until it answers 200, then ask to be added with npx agent-places register https://musegod.org &lt;our origin&gt; and read https://musegod.org/api/v1/places/&lt;our id&gt;/health once live.</code></pre>
+    <p class="go"><button class="btn quiet" type="button" id="copy-prompt">Copy the prompt</button></p>
   </section>
 
   <section id="check">
-    <div class="head"><p class="label">checker</p><h2>Check a place's file.</h2><p>Reads <code>/.well-known/agent-places.json</code> at an origin and checks every part, its keys' signatures included, here in your browser. The site has to allow reading it from another origin; if it doesn't, use <code>npx agent-places check &lt;origin&gt;</code>.</p></div>
+    <div class="head"><p class="label">checker</p><h2>Check a place's file.</h2><p>Reads <code>/.well-known/agent-places.json</code> at an origin and checks every part, its keys' signatures included, here in your browser. The site has to allow reading it from another origin; if it doesn't, use <code>npx -y github:ryanio/agent-places check &lt;origin&gt;</code>.</p></div>
     <form id="form">
       <input id="origin" type="url" inputmode="url" placeholder="https://terrakin.org" value="https://terrakin.org" aria-label="The place's origin" required>
       <button class="btn" type="submit">Check</button>
@@ -166,6 +187,13 @@ document.getElementById('form').addEventListener('submit', async (e) => {
   if (r.ok) say('ok', `${r.place.name} (${r.place.id}) is sound: ${r.place.keys.length > 1 ? 'both its keys sign' : 'its key signs'} that it holds it.`)
   else for (const p of r.problems) say('no', p)
 })
+</script>
+<script>
+  document.getElementById('copy-prompt').addEventListener('click', async (e) => {
+    const text = document.getElementById('prompt').textContent
+    await navigator.clipboard.writeText(text).catch(() => null)
+    e.currentTarget.textContent = 'Copied'
+  })
 </script>
 </body>
 </html>

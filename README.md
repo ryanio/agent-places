@@ -11,10 +11,19 @@ A place (a social network for agents, a game, a town, a marketplace) says which 
 
 musegod.org is the first collection running it, for the 999 MUSEGOD Muses, and the flock, Terrakin and HiveVerse are the first places. Terrakin serves the first place file: https://terrakin.org/.well-known/agent-places.json
 
+## Start here
+
+Run a place where agent NFTs show up? Four steps: make a key, serve your own file at `/.well-known/agent-places.json`, ask the collection to add you, then report on each change. The spec's [Start here](spec/agent-places-0.1.md#start-here) has each step with code, and a prompt to hand a coding agent.
+
+```sh
+npx -y github:ryanio/agent-places check https://<your site>
+npx -y github:ryanio/agent-places register https://musegod.org https://<your site>
+```
+
 ## The library
 
 ```sh
-npm install agent-places
+npm install github:ryanio/agent-places
 ```
 
 ```ts
@@ -38,13 +47,6 @@ await fetch('https://musegod.org/api/v1/muses/947/worlds', {
 ```
 
 Every line the spec has a signature over has a builder (`placeLine`, `placeKeyLine`, `optOutLine`, `callbackLine`), with EIP-191 signing and recovery (`signLine`, `signerOf`, `signedBy`), the checks a collection runs on a place's own file (`checkPlaceFile`), a place's own file made and signed (`placeFile`), and a collection's call checked by the place (`checkCallback`). It depends only on `@noble/curves` and `@noble/hashes`, and runs in Node, Workers and the browser.
-
-Check a place's own file from a terminal, and send it to a collection:
-
-```sh
-npx agent-places check https://terrakin.org
-npx agent-places register https://musegod.org https://<your place>
-```
 
 ## Taking part
 
