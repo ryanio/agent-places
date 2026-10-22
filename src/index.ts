@@ -152,6 +152,9 @@ export type PlaceFile = {
 	}
 }
 
+const PAGE_MAX = 200
+const NESTED = /\((?:[^()\\]|\\.)*[+*}](?:[^()\\]|\\.)*\)[+*{?]/
+
 // Whether a place's own file (served at <origin>/.well-known/agent-places.json)
 // is sound: every part as the spec has it, every link on its own site, and
 // each key signing that the place holds it at this origin.
@@ -172,14 +175,19 @@ export function checkPlaceFile(
 		new URL(u).protocol === 'https:' &&
 		own(new URL(u).host)
 	if (!PLACE_ID.test(p.id ?? '')) problems.push('id is lowercase letters, digits and dashes, 2 to 24.')
-	if (!p.name?.trim()) problems.push('name is missing.')
+	if (!p.name?.trim() || p.name.trim().length > 40) problems.push('name is 1 to 40 characters.')
 	if (!onSite(p.home)) problems.push(`home must be an https page on ${host}.`)
+	// A collection runs the pattern on every report, so it stays short and
+	// free of a quantified group inside a quantified group.
 	let page: RegExp | null = null
-	try {
-		page = new RegExp(p.page ?? '')
-	} catch {
-		problems.push('page is not a regular expression.')
-	}
+	if ((p.page ?? '').length > PAGE_MAX || NESTED.test(p.page ?? ''))
+		problems.push(`page is ${PAGE_MAX} characters at most, with no quantified group inside a quantified group.`)
+	else
+		try {
+			page = new RegExp(p.page ?? '')
+		} catch {
+			problems.push('page is not a regular expression.')
+		}
 	const named = (p.page ?? '').replace(/\\\./g, '.').match(/(?:[a-z0-9-]+\.)+[a-z]{2,}/gi) ?? []
 	if (
 		page &&

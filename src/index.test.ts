@@ -97,6 +97,8 @@ test("a place's own file is sound only when its keys sign for it at its origin a
 	assert.equal(bad({ page: '^https:\\/\\/evil\\.example\\/a\\/\\w+$' }), false)
 	assert.equal(bad({ join: 'https://evil.example/join.md' }), false)
 	assert.equal(bad({ id: 'Agora!' }), false)
+	// A pattern that could take a regex engine seconds on one url.
+	assert.equal(bad({ page: '^https:\\/\\/agora\\.example\\/(a+)+$' }), false)
 })
 
 test('a report carries its line and signature, and a call from a collection checks against its keys', () => {

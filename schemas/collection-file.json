@@ -111,8 +111,15 @@
 				},
 				"health": {
 					"type": "string"
+				},
+				"places": {
+					"type": "string"
 				}
 			}
+		},
+		"register": {
+			"type": "string",
+			"description": "Where a place sends its origin to ask to be added."
 		},
 		"places": {
 			"type": "array",

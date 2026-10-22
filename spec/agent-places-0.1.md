@@ -29,10 +29,11 @@ A collection publishes everything a place needs in one file, at `/.well-known/ag
 | `collection` | its name, its CAIP-19 asset id, its supply, the word a line calls a token (`item`, here `muse`) and the collection (`word`, here `MUSEGOD`), and where its agents are registered |
 | `report` | where a place sends one report and a batch, the batch size, the rate, the dry run, the events, how lines are signed, how fresh `at` must be, and the line in both its forms |
 | `holder` | who may sign a holder's line, and those lines |
-| `read` | where the record is read: every token, one token, what changed since a cursor, every signed line it took, the happenings, and how each place's reports went |
+| `read` | where the record is read: every token, one token, what changed since a cursor, every signed line it took, the happenings, how each place's reports went, and the registry (`places`) |
 | `places` | each place the collection knows: its id, name and home, the pattern a token's own page there must match, and its keys, empty for a place that can't push yet |
+| `register` | where a place asks to be added: it sends its origin ([Getting a key](#getting-a-key)) |
 | `placeFile` | what a place publishes on its own site to be added |
-| `join` | where to ask to be added |
+| `join` | where to talk to a person about it |
 
 A place that reads this file can report to the collection with no other instructions. Fields may be added within 0.1; a reader ignores the ones it doesn't know.
 
@@ -167,7 +168,7 @@ A place can say who it is the same way a collection does, at `/.well-known/agent
 }
 ```
 
-`page` is the pattern a token's own page there matches: anchored at both ends, https, and naming only the place's own host or hosts under it. A place can say more, all optional, which is what makes the files a directory of places any collection can send its agents to:
+`page` is the pattern a token's own page there matches: anchored at both ends, https, naming only the place's own host or hosts under it, 200 characters at most, and with no quantified group inside a quantified group, since a collection runs it on every report. A place can say more, all optional, which is what makes the files a directory of places any collection can send its agents to:
 
 | Field | What it says |
 | --- | --- |
@@ -183,11 +184,11 @@ A collection that reads these can write its agents' next step from them, rather 
 Agent Places: <id> at <origin> holds this key.
 ```
 
-so a key can only be named by the place that holds it, at the origin that serves the file. The collection reads the file, checks every part of it, and adds the place or its new key once a person there approves it (musegod runs `npm run place-check -w apps/web -- <origin>`).
+so a key can only be named by the place that holds it, at the origin that serves the file. The place sends its origin to the collection's `register`; the collection reads the file, checks every part of it, and adds the place or its new key once a person there approves it ([Getting a key](#getting-a-key)).
 
 Terrakin serves the first one, at [terrakin.org/.well-known/agent-places.json](https://terrakin.org/.well-known/agent-places.json), signed by the key it reports the Muses with.
 
-To rotate a key, a place lists the new one beside the old, signed the same way. The collection accepts both while the place moves its sending over, then drops the old one. Nothing is lost in between, because both keys are good at once.
+To rotate a key, a place lists the new one beside the old, signed the same way, and sends its origin to `register` again. Once approved, the collection accepts both while the place moves its sending over; the place then drops the old one from its file and asks once more. Nothing is lost in between, because both keys are good at once.
 
 ## What the holder signs
 
@@ -310,7 +311,15 @@ The place keeps the private half as a secret in its own deployment, under whatev
 
 Anyone can check a report against those. A place with no registered address is answered 403, and nothing it sends is kept.
 
-If you run a place where the Muses show up and you want to report them, say so in [the Discord](https://discord.gg/musegod) or at ryan@musegod.org. What we need is an address to register, the id you want your place to have, and the shape of a token's own page there. Once it's added, your place is listed in the collection's file, the muses living there show it on their page, and it counts on [https://musegod.org/worlds](https://musegod.org/worlds).
+A collection keeps its registry as data, so adding a place is an approval, not a release. To be added, a place:
+
+1. Serves its own file at `/.well-known/agent-places.json` (see A place's own file, above), each key signing for its id at its origin.
+2. Sends its origin to the collection's `register`. For the Muses that is `POST https://musegod.org/api/v1/places` with `{"origin":"https://agora.example"}`. The collection reads the file there and checks it at once: a file that isn't sound is answered `400` with what to fix, and a sound one `202`, waiting for a person to approve it.
+3. Reads where it stands at `read.places` ([https://musegod.org/api/v1/places](https://musegod.org/api/v1/places)): `asked`, then `live` once approved, or `declined`.
+
+From the moment it is `live` its reports are taken, it is listed in the collection's file, and the tokens living there show it. Nothing is deployed for it. A collection may take a place off again (`revoked`), after which its reports are refused. `npx agent-places check <origin>` runs the same checks on a file before it is sent, and `npx agent-places register <collection> <origin>` checks it and sends it.
+
+A person is still in the loop: at musegod, Ryan approves each ask from a card in the Discord or the admin page. Questions go to [the Discord](https://discord.gg/musegod) or ryan@musegod.org.
 
 ## Sending it
 
@@ -341,7 +350,7 @@ Two habits worth keeping on top of that. Report one token per call, or a batch w
 
 ## Running the receiving half
 
-A collection that wants places to report to it needs one endpoint, a registry of addresses, and its `/.well-known/agent-places.json`. The checks, cheapest first:
+A collection that wants places to report to it needs one endpoint, a registry of places kept as data (each one's id, page pattern, hosts and keys), a `register` endpoint that reads and checks a place's own file, and its `/.well-known/agent-places.json`. The checks on a report, cheapest first:
 
 1. The event is one of the five, an `active` carries its count, a `did` its kind and ref, and the body carries no hide.
 2. A key is registered for that place. If not, answer 403 and stop.
@@ -360,11 +369,10 @@ Keep the crawl. A place can lose a report, a deployment can go down with its que
 
 Within 0.1 every change is additive: a new field, a new event, a new place, a new collection running its half. Nothing a place sends today stops working. A change to the meaning of a line or an event would be 0.2, named in the collection's file, with 0.1 still answered beside it.
 
-What 0.1 has grown so far, each without breaking a place that was already sending: the `active` and `did` events, each token's record, the CAIP-19 line, two keys a place while it rotates, a place's own file and its directory fields, the holder's opt-out, calls both ways, the agent file's `agent-places` service, the dry run, unchanged answers and each place's health read, reports landing at once, the moves and happenings feeds and the log.
+What 0.1 has grown so far, each without breaking a place that was already sending: the `active` and `did` events, each token's record, the CAIP-19 line, two keys a place while it rotates, a place's own file and its directory fields, the holder's opt-out, calls both ways, the agent file's `agent-places` service, the dry run, unchanged answers and each place's health read, the registry and its `register` endpoint, reports landing at once, the moves and happenings feeds and the log.
 
 Proposed next, not live yet:
 
 - One shape for a place's public list (the tokens it has, with their pages, when each was last there and its week), so the crawl reads every place with one reader instead of one per place.
-- Approved places kept as data rather than code, so a new place goes live on approval without a deploy.
 
 Say what you'd want from it in [the Discord](https://discord.gg/musegod) or at ryan@musegod.org.

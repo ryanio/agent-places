@@ -39,10 +39,11 @@ await fetch('https://musegod.org/api/v1/muses/947/worlds', {
 
 Every line the spec has a signature over has a builder (`placeLine`, `placeKeyLine`, `optOutLine`, `callbackLine`), with EIP-191 signing and recovery (`signLine`, `signerOf`, `signedBy`), the checks a collection runs on a place's own file (`checkPlaceFile`), a place's own file made and signed (`placeFile`), and a collection's call checked by the place (`checkCallback`). It depends only on `@noble/curves` and `@noble/hashes`, and runs in Node, Workers and the browser.
 
-Check a place's own file from a terminal:
+Check a place's own file from a terminal, and send it to a collection:
 
 ```sh
 npx agent-places check https://terrakin.org
+npx agent-places register https://musegod.org https://<your place>
 ```
 
 ## Taking part
