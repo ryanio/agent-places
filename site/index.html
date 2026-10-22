@@ -163,7 +163,7 @@ document.getElementById('form').addEventListener('submit', async (e) => {
   if (!body) return say('no', `Couldn't read ${origin}/.well-known/agent-places.json from here (missing, not JSON, or not readable from another site).`)
   if (body.collection) return say('ok', `${origin} serves a collection's file: it takes reports. ${body.places?.length ?? 0} places listed.`)
   const r = checkPlaceFile(origin, body)
-  if (r.ok) say('ok', `${r.place.name} (${r.place.id}) is sound: ${r.place.keys.length} key${r.place.keys.length > 1 ? 's' : ''}, each signing that it holds it.`)
+  if (r.ok) say('ok', `${r.place.name} (${r.place.id}) is sound: ${r.place.keys.length > 1 ? 'both its keys sign' : 'its key signs'} that it holds it.`)
   else for (const p of r.problems) say('no', p)
 })
 </script>
