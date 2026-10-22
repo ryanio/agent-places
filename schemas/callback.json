@@ -1,0 +1,44 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://ryanio.github.io/agent-places/schemas/callback.json",
+	"title": "A collection's call to a place",
+	"description": "POSTed to the callback in the place's own file, signed over: <word> tells <place> about <item> #<token>: <kind>. Signed at <at>.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"collection",
+		"token",
+		"kind",
+		"at",
+		"signer",
+		"signature"
+	],
+	"properties": {
+		"collection": {
+			"type": "string",
+			"pattern": "^eip155:\\d+/erc721:0x[0-9a-fA-F]{40}$"
+		},
+		"token": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"kind": {
+			"type": "string",
+			"enum": [
+				"sold",
+				"star"
+			]
+		},
+		"at": {
+			"type": "integer"
+		},
+		"signer": {
+			"type": "string",
+			"pattern": "^0x[0-9a-fA-F]{40}$"
+		},
+		"signature": {
+			"type": "string",
+			"pattern": "^0x[0-9a-fA-F]+$"
+		}
+	}
+}

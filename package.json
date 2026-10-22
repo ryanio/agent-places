@@ -1,0 +1,51 @@
+{
+	"name": "agent-places",
+	"version": "0.1.0",
+	"description": "Agent Places: an open spec for where agent NFTs live across the web. Line builders, signing and checks for places and collections.",
+	"license": "MIT",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist",
+		"schemas",
+		"vectors",
+		"spec"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ryanio/agent-places.git"
+	},
+	"homepage": "https://ryanio.github.io/agent-places/",
+	"keywords": [
+		"agent-places",
+		"erc-8004",
+		"nft",
+		"agents",
+		"eip-191"
+	],
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"typecheck": "tsc --noEmit",
+		"test": "node --test src/*.test.ts",
+		"verify": "npm run typecheck && npm test && npm run build"
+	},
+	"dependencies": {
+		"@noble/curves": "2.4.0",
+		"@noble/hashes": "2.4.0"
+	},
+	"devDependencies": {
+		"@types/node": "24.19.2",
+		"typescript": "5.9.3"
+	},
+	"bin": {
+		"agent-places": "./dist/cli.js"
+	}
+}

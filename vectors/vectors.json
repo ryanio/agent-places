@@ -1,0 +1,63 @@
+{
+	"key": "0x1111111111111111111111111111111111111111111111111111111111111111",
+	"address": "0x19e7e376e7c213b7e7e7e46cc70a5dd086daff2a",
+	"at": 1791000000,
+	"asset": "eip155:4663/erc721:0x13Ea3072b7215d4C9c2Ec4f498A08c5825129836",
+	"cases": [
+		{
+			"name": "joined",
+			"line": "agora reports muse #947 of MUSEGOD: joined https://agora.example/a/k41. Signed at 1791000000.",
+			"signature": "0x2a275893939fdab67dd2d7cda559870af3d3789d6fa4d4075e059f891fd24b7032e46105b471df47d1e3ad88d75a669a192ac7f95c01cb71d293b80bb86e7e521b"
+		},
+		{
+			"name": "linked",
+			"line": "agora reports muse #947 of MUSEGOD: linked https://agora.example/a/k41. Signed at 1791000000.",
+			"signature": "0x3b7fb9d55d7776c32d5e477ee425750c5188296113e50dc3f54877af8ed500f678d35d4c1bddd3e31c2e3e18abf466cbe987aef0ff5a636b1557802a12ab1f601b"
+		},
+		{
+			"name": "left",
+			"line": "agora reports muse #947 of MUSEGOD: left https://agora.example/a/k41. Signed at 1791000000.",
+			"signature": "0x020d6600ff7b6a21c8b083c7f035ab805272a99f0867f402498fbb0d359002c84320db44d7051af367ee3729527f660d83915c6cf53a640a01ba6a3d75e1a4dc1b"
+		},
+		{
+			"name": "active",
+			"line": "agora reports muse #947 of MUSEGOD: active 12 https://agora.example/a/k41. Signed at 1791000000.",
+			"signature": "0xc6824b5b61c325435f5d5daaefcfa0d3760f15517afe62230e9f8fb0cd4e7f142f7fd06d7a0987d92e6d5f1fd2ceefed2fa18c80ec2d5c5a0f2e6a0947ef5c521c"
+		},
+		{
+			"name": "did",
+			"line": "agora reports muse #947 of MUSEGOD: did sold \"Mini Sprout\" for 0.01 ETH https://agora.example/m/123 ref m123. Signed at 1791000000.",
+			"signature": "0xbe22aaf6ca5d9b9d5936f659d74813b4435d0d3cd60cd0e23cda4325d0764dbc30401c685d221516289783878dbf48d5c17d775f0aba099c6d56dbda667cfe1b1b"
+		},
+		{
+			"name": "didPlain",
+			"line": "agora reports muse #947 of MUSEGOD: did posted https://agora.example/p/9 ref p9. Signed at 1791000000.",
+			"signature": "0x310e14c57c1875a7d21de63d07c1a6bdb1ca39916f25e07dbfdff112f3728156114bff12bbc0e63348e12d3a4fd410c2300fcd87bc9d3c9f20e5b18d0cf4d96d1c"
+		},
+		{
+			"name": "asset",
+			"line": "agora reports eip155:4663/erc721:0x13Ea3072b7215d4C9c2Ec4f498A08c5825129836/947: linked https://agora.example/a/k41. Signed at 1791000000.",
+			"signature": "0xeb4535b0507d3552ae0206073b3aa6fc5b2d36b6c078a823f704ec7968de7a183a43a2c33a4ca3337d33e2d15b1a2051cbff256640a831aea44afe1e3786f0661b"
+		},
+		{
+			"name": "placeKey",
+			"line": "Agent Places: agora at https://agora.example holds this key.",
+			"signature": "0x5a146d46b1f770ceac4c16982bc1180571aab2f262c96c0285e00dcac57561bf6e420b2bc8560af2da5b29130fb8ef7a2f9a4caec61a91054cb407cd6678bcfb1b"
+		},
+		{
+			"name": "optOut",
+			"line": "No place may report muse #947 of MUSEGOD. Signed at 1791000000.",
+			"signature": "0xe4825acf5637c043c38ead8c0074f2fb25c1e50fbc47de34e7abef49f273faf73a4a8361286f689470dd9ce7012f638c77d4341e03b7ada5042ad8e778cb56ea1c"
+		},
+		{
+			"name": "optIn",
+			"line": "Places may report muse #947 of MUSEGOD again. Signed at 1791000000.",
+			"signature": "0xaade1ec3de4f241eab8ae6ddb3876824d6dfc3263c6961a1f9be026ee73f4d196bec12aed3434d89dd67ea7d946c8eddd49fc0d62a6c8e6c71526cf6d369a37b1c"
+		},
+		{
+			"name": "callback",
+			"line": "MUSEGOD tells agora about muse #947: sold. Signed at 1791000000.",
+			"signature": "0xa77c1ed102e98a7cfa2e67372eda04302adf75abbe0f341c4bac48f7f50228a6472f80b4ba1099a1350c0fa0f6f49d6f1b6898cb9667d4afe3d495332e71ecea1b"
+		}
+	]
+}
