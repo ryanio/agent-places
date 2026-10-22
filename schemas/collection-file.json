@@ -108,6 +108,9 @@
 				},
 				"happenings": {
 					"type": "string"
+				},
+				"health": {
+					"type": "string"
 				}
 			}
 		},

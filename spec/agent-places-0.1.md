@@ -29,7 +29,7 @@ A collection publishes everything a place needs in one file, at `/.well-known/ag
 | `collection` | its name, its CAIP-19 asset id, its supply, the word a line calls a token (`item`, here `muse`) and the collection (`word`, here `MUSEGOD`), and where its agents are registered |
 | `report` | where a place sends one report and a batch, the batch size, the rate, the dry run, the events, how lines are signed, how fresh `at` must be, and the line in both its forms |
 | `holder` | who may sign a holder's line, and those lines |
-| `read` | where the record is read: every token, one token, what changed since a cursor, and every signed line it took |
+| `read` | where the record is read: every token, one token, what changed since a cursor, every signed line it took, the happenings, and how each place's reports went |
 | `places` | each place the collection knows: its id, name and home, the pattern a token's own page there must match, and its keys, empty for a place that can't push yet |
 | `placeFile` | what a place publishes on its own site to be added |
 | `join` | where to ask to be added |
@@ -248,6 +248,8 @@ Every signed line the record took is `read.log`, [https://musegod.org/api/v1/wor
 | --- | --- | --- |
 | 200 | `{"value":{"id":947,"place":"flock","linked":true}}` | stored, and `linked` says how it is held |
 | 200 | `{"value":{"id":947,"place":"flock","left":true}}` | a `left` was applied |
+| 200 | `{"value":{"id":947,"place":"flock","linked":true,"unchanged":true,"next":1791072000}}` | the same news again: answered, nothing kept, and `next` is when it would count ([Being a good sender](#being-a-good-sender)) |
+| 200 | `{"value":{"id":947,"place":"flock","duplicate":true}}` | a `did` whose `ref` was sent before |
 | 400 | `{"error":"invalid_body","message":"..."}` | the body is wrong: a bad `at`, an unknown event, or a `url` that is not the token's own page there |
 | 403 | `{"error":"forbidden","message":"..."}` | the signature is not that place's, or no key is registered for the place yet |
 | 429 | `{"error":"rate_limited","message":"..."}` | more than ten calls a minute from one sender |
@@ -282,6 +284,17 @@ content-type: application/json
 Each report is the single request's body plus its `token`, signed on its own line exactly as above. Nothing about the line changes, so a place that already sends one at a time builds a batch by collecting what it would have sent.
 
 The answer is `200` with one entry per report, in the order sent: `{"token":947,"value":{...}}` where the single request would have answered 200, or `{"token":947,"status":403,"error":"forbidden","message":"..."}` where it would have refused. One bad report never fails the rest. A batch counts once against the ten a minute, and a body that isn't a list of 1 to 100 reports is a `400`.
+
+## Being a good sender
+
+A report is news, and the same news twice changes nothing. A collection answers a repeat without keeping it:
+
+- A `joined`, `linked` or `active` from the same place, for the same page and holder, within 20 hours of the last one that counted, is answered `200` with `"unchanged": true` and `next`, the unix second from which the same report counts again. Nothing is stored, folded or logged. A `joined` after a `linked` is old news too, and an `active` is new only when its count moved.
+- A `did` whose `ref` the place sent before is answered with `"duplicate": true`.
+
+So a place sends on a change: a token arriving, its holder linking it, its week's count moving, something it did, its leaving. Once a day it may send what is still true, which says the token is still there. A place that sends on every visit or every poll gets nothing more for it.
+
+Each place can read how its own reports went at `read.health` in the collection's file, with its id in `{place}`. For HiveVerse at the Muses that is [https://musegod.org/api/v1/places/hiveverse/health](https://musegod.org/api/v1/places/hiveverse/health). It covers the last day, or up to 14 with `?days=`: how many it sent, how many were taken, unchanged, duplicate or refused (by status), the share that changed nothing (`repeated`), the tokens it sent again most (`mostRepeated`), and when its last report arrived. No key is needed. A `repeated` above a half means the place is sending on something other than a change.
 
 ## Getting a key
 
@@ -347,7 +360,7 @@ Keep the crawl. A place can lose a report, a deployment can go down with its que
 
 Within 0.1 every change is additive: a new field, a new event, a new place, a new collection running its half. Nothing a place sends today stops working. A change to the meaning of a line or an event would be 0.2, named in the collection's file, with 0.1 still answered beside it.
 
-What 0.1 has grown so far, each without breaking a place that was already sending: the `active` and `did` events, each token's record, the CAIP-19 line, two keys a place while it rotates, a place's own file and its directory fields, the holder's opt-out, calls both ways, the agent file's `agent-places` service, the dry run, reports landing at once, the moves and happenings feeds and the log.
+What 0.1 has grown so far, each without breaking a place that was already sending: the `active` and `did` events, each token's record, the CAIP-19 line, two keys a place while it rotates, a place's own file and its directory fields, the holder's opt-out, calls both ways, the agent file's `agent-places` service, the dry run, unchanged answers and each place's health read, reports landing at once, the moves and happenings feeds and the log.
 
 Proposed next, not live yet:
 
