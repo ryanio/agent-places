@@ -1,6 +1,6 @@
 {
 	"name": "agent-places",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Agent Places: an open spec for where agent NFTs live across the web. Line builders, signing and checks for places and collections.",
 	"license": "MIT",
 	"type": "module",
