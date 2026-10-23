@@ -7,6 +7,7 @@ import {
 	checkCallback,
 	checkPlaceFile,
 	optOutLine,
+	pageMatches,
 	placeFile,
 	placeKeyLine,
 	placeLine,
@@ -87,6 +88,7 @@ test("a place's own file is sound only when its keys sign for it at its origin a
 			what: 'A town of agents.',
 			join: `${origin}/join.md`,
 			callback: `${origin}/agent-places/calls`,
+			unit: 'hours',
 		},
 		[vectors.key],
 	)
@@ -99,6 +101,17 @@ test("a place's own file is sound only when its keys sign for it at its origin a
 	assert.equal(bad({ id: 'Agora!' }), false)
 	// A pattern that could take a regex engine seconds on one url.
 	assert.equal(bad({ page: '^https:\\/\\/agora\\.example\\/(a+)+$' }), false)
+	assert.equal(bad({ unit: 'Hours!' }), false)
+})
+
+test("a page pattern that names the token matches only that token's page", () => {
+	const named = '^https:\\/\\/agora\\.example\\/\\?muse=(?<token>\\d{1,4})$'
+	assert.equal(pageMatches(named, 'https://agora.example/?muse=947', 947), true)
+	assert.equal(pageMatches(named, 'https://agora.example/?muse=947', 5), false, "#947's page for #5")
+	assert.equal(pageMatches(named, 'https://evil.example/?muse=5', 5), false)
+	// A pattern with no token group can't say whose page it is: any match goes.
+	const plain = '^https:\\/\\/agora\\.example\\/a\\/[a-z0-9]{2,20}$'
+	assert.equal(pageMatches(plain, 'https://agora.example/a/k41', 947), true)
 })
 
 test('a report carries its line and signature, and a call from a collection checks against its keys', () => {
@@ -116,6 +129,11 @@ test('a report carries its line and signature, and a call from a collection chec
 	assert.equal(r.signer, vectors.address)
 	assert.equal(r.what, 'sold')
 	const call = { token: 947, kind: 'sold' as const, at: vectors.at, signature: line('callback').signature }
-	assert.equal(checkCallback(call, { naming: MUSE, place: 'agora', keys: [vectors.address] }).ok, true)
-	assert.equal(checkCallback(call, { naming: MUSE, place: 'other', keys: [vectors.address] }).ok, false)
+	const keys = [vectors.address]
+	const now = vectors.at + 60
+	assert.equal(checkCallback(call, { naming: MUSE, place: 'agora', keys, now }).ok, true)
+	assert.equal(checkCallback(call, { naming: MUSE, place: 'other', keys, now }).ok, false)
+	// Signed afresh on every attempt, so an old one is a replay.
+	const late = checkCallback(call, { naming: MUSE, place: 'agora', keys, now: vectors.at + 601 })
+	assert.deepEqual([late.signed, late.fresh, late.ok], [true, false, false])
 })

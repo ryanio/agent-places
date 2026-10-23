@@ -31,6 +31,11 @@ export const REF = /^[A-Za-z0-9_-]{1,64}$/
 export const SYMBOL = /^[A-Z][A-Z0-9]{1,9}$/
 export const PLACE_ID = /^[a-z][a-z0-9-]{1,23}$/
 export const ASSET = /^eip155:\d+\/erc721:0x[0-9a-fA-F]{40}$/
+// What a place's `week` counts, in its own words: 'hours', 'posts and replies'.
+export const UNIT = /^[a-z][a-z ,'-]{0,39}$/
+// How far a signed `at` may be from the reader's clock, either way: a report
+// at the collection, a call at the place.
+export const FRESH_SECONDS = 600
 
 // How a line names a token: in the collection's own words ("muse #947 of
 // MUSEGOD", from its file's `item` and `word`), or by the collection's CAIP-19
@@ -149,6 +154,7 @@ export type PlaceFile = {
 		rules?: string
 		callback?: string
 		collections?: string[]
+		unit?: string
 	}
 }
 
@@ -204,6 +210,8 @@ export function checkPlaceFile(
 		problems.push('what is one sentence, 200 characters at most.')
 	if (p.collections !== undefined && !(Array.isArray(p.collections) && p.collections.every((c) => ASSET.test(c))))
 		problems.push('collections lists CAIP-19 ids: eip155:<chain>/erc721:<contract>.')
+	if (p.unit !== undefined && !(typeof p.unit === 'string' && UNIT.test(p.unit)))
+		problems.push("unit is what week counts, in lowercase words: 40 characters at most, like 'hours'.")
 	const keys = Array.isArray(p.keys) ? p.keys : []
 	if (keys.length < 1 || keys.length > 2) problems.push('keys holds one key, or two while rotating.')
 	const line = placeKeyLine(p.id ?? '', origin)
@@ -211,6 +219,16 @@ export function checkPlaceFile(
 		if (!/^0x[0-9a-fA-F]{40}$/.test(k.address ?? '') || !signedBy(line, k.signature ?? '', k.address))
 			problems.push(`${k.address}'s signature isn't of "${line}".`)
 	return problems.length ? { ok: false, problems } : { ok: true, place: p as PlaceFile['place'] }
+}
+
+// Whether `url` is token `token`'s own page at a place whose page pattern is
+// `page`. A pattern that names the token with a (?<token>…) group matches
+// only that token's page, so one token can't be reported with another's.
+export function pageMatches(page: string, url: string, token: number): boolean {
+	const m = new RegExp(page).exec(url)
+	if (!m) return false
+	const named = m.groups?.token
+	return named === undefined || Number(named) === token
 }
 
 // A place's own file, signed with its keys: what a place serves at
@@ -261,13 +279,18 @@ export function report(o: {
 	}
 }
 
-// What a collection's call to a place says, checked: the line it signed, and
-// whether one of the collection's keys signed it.
+// What a collection's call to a place says, checked: the line it signed,
+// whether one of the collection's keys signed it, and whether its `at` is
+// within FRESH_SECONDS of `now` (unix seconds, the place's clock by default).
+// Each attempt is signed afresh, so a stale call is a replay: refuse it.
 export function checkCallback(
 	body: { token: number; kind: CallbackKind; at: number; signature: string },
-	o: { naming: { item: string; word: string }; place: string; keys: string[] },
+	o: { naming: { item: string; word: string }; place: string; keys: string[]; now?: number },
 ) {
 	const line = callbackLine(o.naming, o.place, body.token, body.kind, body.at)
 	const by = signerOf(line, body.signature)
-	return { line, ok: by !== null && o.keys.some((k) => k.toLowerCase() === by) }
+	const now = o.now ?? Math.floor(Date.now() / 1000)
+	const fresh = Number.isInteger(body.at) && Math.abs(now - body.at) <= FRESH_SECONDS
+	const signed = by !== null && o.keys.some((k) => k.toLowerCase() === by)
+	return { line, signed, fresh, ok: signed && fresh }
 }

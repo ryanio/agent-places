@@ -156,6 +156,10 @@
 					},
 					"join": {
 						"type": "string"
+					},
+					"unit": {
+						"type": "string",
+						"description": "What the place's week counts, from its own file."
 					}
 				}
 			}

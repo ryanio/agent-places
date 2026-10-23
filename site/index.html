@@ -126,9 +126,9 @@ footer p { font-size: 14px; color: var(--dim); }
       <li><b>Make a key.</b> Any secp256k1 keypair, its private half a secret in your deployment.</li>
       <li><b>Serve your file</b> at <code>/.well-known/agent-places.json</code>: your id, the shape of a token's page with you, and your key signing that it's yours. <code>placeFile()</code> in the library writes it.</li>
       <li><b>Ask the collection.</b> One command checks your file and sends your origin; you're live once a person there approves it.
-        <pre><code>npx -y github:ryanio/agent-places register https://musegod.org https://&lt;your site&gt;</code></pre></li>
+        <pre><code>npx -y agent-places register https://musegod.org https://&lt;your site&gt;</code></pre></li>
       <li><b>Report on a change.</b> One signed POST when a token joins, is linked, does something or leaves. Add <code>?dry=1</code> to try it first.
-        <pre><code>// npm install github:ryanio/agent-places
+        <pre><code>// npm install agent-places
 import { report } from 'agent-places'
 
 const body = report({
@@ -150,12 +150,12 @@ await fetch('https://musegod.org/api/v1/muses/947/worlds?dry=1', {
 
   <section>
     <div class="head"><p class="label">for agents</p><h2>Hand it to your coding agent.</h2><p>Every line to sign is in the spec word for word, so an agent can build the sending half from the text alone. Paste it this, with your place filled in:</p></div>
-    <pre class="wrap" id="prompt"><code>Implement the sending half of Agent Places for &lt;my place&gt;, reporting MUSEGOD Muses to musegod.org. The spec is https://raw.githubusercontent.com/ryanio/agent-places/main/spec/agent-places-0.1.md and everything the collection needs from us is in https://musegod.org/.well-known/agent-places.json. Use the agent-places library (npm install github:ryanio/agent-places). Keep the place's key as a deployment secret, never in code, a log or a command line. Serve our place file, report only on a change (joined, linked, active, did, left) after the change has committed, try every kind of report with ?dry=1 until it answers 200, then ask to be added with npx agent-places register https://musegod.org &lt;our origin&gt; and read https://musegod.org/api/v1/places/&lt;our id&gt;/health once live.</code></pre>
+    <pre class="wrap" id="prompt"><code>Implement the sending half of Agent Places for &lt;my place&gt;, reporting MUSEGOD Muses to musegod.org. The spec is https://raw.githubusercontent.com/ryanio/agent-places/main/spec/agent-places-0.1.md and everything the collection needs from us is in https://musegod.org/.well-known/agent-places.json. Use the agent-places library (npm install agent-places). Keep the place's key as a deployment secret, never in code, a log or a command line. Serve our place file, report only on a change (joined, linked, active, did, left) after the change has committed, try every kind of report with ?dry=1 until it answers 200, then ask to be added with npx -y agent-places register https://musegod.org &lt;our origin&gt; and read https://musegod.org/api/v1/places/&lt;our id&gt;/health once live.</code></pre>
     <p class="go"><button class="btn quiet" type="button" id="copy-prompt">Copy the prompt</button></p>
   </section>
 
   <section id="check">
-    <div class="head"><p class="label">checker</p><h2>Check a place's file.</h2><p>Reads <code>/.well-known/agent-places.json</code> at an origin and checks every part, its keys' signatures included, here in your browser. The site has to allow reading it from another origin; if it doesn't, use <code>npx -y github:ryanio/agent-places check &lt;origin&gt;</code>.</p></div>
+    <div class="head"><p class="label">checker</p><h2>Check a place's file.</h2><p>Reads <code>/.well-known/agent-places.json</code> at an origin and checks every part, its keys' signatures included, here in your browser. The site has to allow reading it from another origin; if it doesn't, use <code>npx -y agent-places check &lt;origin&gt;</code>.</p></div>
     <form id="form">
       <input id="origin" type="url" inputmode="url" placeholder="https://terrakin.org" value="https://terrakin.org" aria-label="The place's origin" required>
       <button class="btn" type="submit">Check</button>

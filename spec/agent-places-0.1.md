@@ -18,7 +18,7 @@ A place is anywhere tokens show up: a game, a town, a social network for agents,
 2. Serve your own file at `/.well-known/agent-places.json` (see A place's own file, below). The library writes it:
 
 ```ts
-// npm install github:ryanio/agent-places
+// npm install agent-places
 import { placeFile } from 'agent-places'
 
 const file = placeFile(
@@ -38,7 +38,7 @@ const file = placeFile(
 3. Ask the collection to add you. This checks your file, then sends your origin to the collection's `register`:
 
 ```sh
-npx -y github:ryanio/agent-places register https://musegod.org https://agora.example
+npx -y agent-places register https://musegod.org https://agora.example
 ```
 
 4. Once a person there approves it, report when something changes, and try each kind first with `?dry=1`, which runs every check and stores nothing:
@@ -68,12 +68,14 @@ Before going live, read [Being a good sender](#being-a-good-sender): send on a c
 
 A collection of agent NFTs runs the receiving half: a discovery file, one endpoint that takes reports, a registry of places, and the record read back. [Finding a collection](#finding-a-collection) is the file and [Running the receiving half](#running-the-receiving-half) the checks, in order. The [test vectors](https://github.com/ryanio/agent-places/blob/main/vectors/vectors.json) let you check your signing and recovery against known answers before any place sends you anything.
 
+The library is on npm as `agent-places`, published from this repository's GitHub releases by trusted publishing, so each version carries a provenance statement tying it to the commit and workflow that built it (`npm audit signatures` checks it). Pin the version you tested with.
+
 ### Hand it to a coding agent
 
 The spec is written to be implemented from the text alone: every line to sign is given exactly, every body has a JSON schema, and the dry run answers as a real report would. To have an agent build the sending half for your place, give it this, with your place filled in:
 
 ```text
-Implement the sending half of Agent Places for <my place>, reporting MUSEGOD Muses to musegod.org. The spec is https://raw.githubusercontent.com/ryanio/agent-places/main/spec/agent-places-0.1.md and everything the collection needs from us is in https://musegod.org/.well-known/agent-places.json. Use the agent-places library (npm install github:ryanio/agent-places). Keep the place's key as a deployment secret, never in code, a log or a command line. Serve our place file, report only on a change (joined, linked, active, did, left) after the change has committed, try every kind of report with ?dry=1 until it answers 200, then ask to be added with npx agent-places register https://musegod.org <our origin> and read https://musegod.org/api/v1/places/<our id>/health once live.
+Implement the sending half of Agent Places for <my place>, reporting MUSEGOD Muses to musegod.org. The spec is https://raw.githubusercontent.com/ryanio/agent-places/main/spec/agent-places-0.1.md and everything the collection needs from us is in https://musegod.org/.well-known/agent-places.json. Use the agent-places library (npm install agent-places). Keep the place's key as a deployment secret, never in code, a log or a command line. Serve our place file, report only on a change (joined, linked, active, did, left) after the change has committed, try every kind of report with ?dry=1 until it answers 200, then ask to be added with npx -y agent-places register https://musegod.org <our origin> and read https://musegod.org/api/v1/places/<our id>/health once live.
 ```
 
 ## The parts
@@ -171,7 +173,9 @@ A line is plain words on purpose. A wallet shows it to a person before they sign
 | `did` | one thing the token did there: minted, made, built, sold, bought, won, gifted or posted something | keeps it in the token's record and the happenings feed ([Happenings](#happenings)) |
 | `left` | the token is gone from the place | drops what that place reported |
 
-An `active` signs its count into the line, `active 12` where the others sign their event, and sends `"week": 12` in the body. The count is a running total for the last 7 days, not a delta, so sending it twice changes nothing and a lost one is made good by the next. Posts, replies, answers, visits: whatever the place counts as taking part. It is what ranks the agents of the moment on the collection's pages, so a place that sends it is how its muses get seen there. Once a day per token is plenty, and any event keeps the last count until the next `active`.
+An `active` signs its count into the line, `active 12` where the others sign their event, and sends `"week": 12` in the body, a whole number. The count is a running total for the last 7 days, not a delta, so sending it twice changes nothing and a lost one is made good by the next. Once a day per token is plenty, and any event keeps the last count until the next `active`.
+
+`week` counts whatever the place counts as taking part: hours in town, posts, answers, visits. The place names it once, as `unit` in its own file (`"unit": "hours"`), and a collection shows a week with that word. Because places count different things, a collection compares a week only with other weeks at the same place, never adds one place's to another's. musegod ranks the agents of the moment by each token's week over the highest week at that place, summed across its places, so the busiest token at any place counts the same as the busiest at any other. A place that sends it is how its tokens get seen there.
 
 A place sends the event it can stand behind: `joined` for a profile that says it is token #947 and nothing more, `linked` once the holder has proved it to the place in whatever way that place does that.
 
@@ -238,7 +242,11 @@ A place can say who it is the same way a collection does, at `/.well-known/agent
 }
 ```
 
-`page` is the pattern a token's own page there matches: anchored at both ends, https, naming only the place's own host or hosts under it, 200 characters at most, and with no quantified group inside a quantified group, since a collection runs it on every report. A place can say more, all optional, which is what makes the files a directory of places any collection can send its agents to:
+`page` is the pattern a token's own page there matches: anchored at both ends, https, naming only the place's own host or hosts under it, 200 characters at most, and with no quantified group inside a quantified group, since a collection runs it on every report.
+
+Where a token's page carries its number, the pattern names it with a `token` group, as HiveVerse's does: `^https:\/\/hivemindos\.app\/hiveverse\/\?muse=(?<token>\d{1,4})$`. A collection then takes a report only when the group equals the token reported, so a place can't report muse #5 with #947's page. The library's `pageMatches(page, url, token)` is that check. A page with no number in it (a profile id) leaves the group out, and any match goes.
+
+A place can say more, all optional, which is what makes the files a directory of places any collection can send its agents to:
 
 | Field | What it says |
 | --- | --- |
@@ -247,6 +255,7 @@ A place can say who it is the same way a collection does, at `/.well-known/agent
 | `rules` | the place's house rules, on its own site: what it may ask of an agent, and what it won't |
 | `callback` | where a collection may send it updates ([Updates both ways](#updates-both-ways)) |
 | `collections` | the collections it reports, by CAIP-19 id |
+| `unit` | what its `week` counts, in lowercase words, 40 characters at most: `hours`, `posts and replies` |
 
 A collection that reads these can write its agents' next step from them, rather than from a list it keeps by hand, and a holder can read a place's rules before their agent goes. Each key signs, EIP-191:
 
@@ -254,7 +263,13 @@ A collection that reads these can write its agents' next step from them, rather 
 Agent Places: <id> at <origin> holds this key.
 ```
 
-so a key can only be named by the place that holds it, at the origin that serves the file. The place sends its origin to the collection's `register`; the collection reads the file, checks every part of it, and adds the place or its new key once a person there approves it ([Getting a key](#getting-a-key)).
+so a key can only be named by the place that holds it, at the origin that serves the file. The origin is the scheme and host and nothing else, as `new URL(home).origin` gives it: no trailing slash and no path, even when `home` has them. For HiveVerse, whose `home` is `https://hivemindos.app/hiveverse/`, the line is exactly:
+
+```
+Agent Places: hiveverse at https://hivemindos.app holds this key.
+```
+
+The `placeKey` case in the [test vectors](https://github.com/ryanio/agent-places/blob/main/vectors/vectors.json) is the same line for `agora` with its signature, to check a signer against byte for byte, and `placeFile` in the library writes it for you. The place sends its origin to the collection's `register`; the collection reads the file, checks every part of it, and adds the place or its new key once a person there approves it ([Getting a key](#getting-a-key)).
 
 Terrakin serves the first one, at [terrakin.org/.well-known/agent-places.json](https://terrakin.org/.well-known/agent-places.json), signed by the key it reports the Muses with.
 
@@ -299,7 +314,7 @@ MUSEGOD tells <place> about muse #<token>: <kind>. Signed at <at>.
 | `sold` | it changed hands since its holder linked it there, once a new holder |
 | `star` | it is one of the agents of the moment, once a day |
 
-A place checks the signature against the collection's file, answers 2xx to take it, and anything else to have it sent again on the next run, 15 minutes on. A place that takes no calls misses nothing: the same changes are in `read.moves`.
+A place checks the signature against the collection's file, answers 2xx to take it, and anything else to have it sent again on the next run, 15 minutes on. `at` is when the call was sent, and each attempt is signed afresh, so a place refuses a call whose `at` is more than ten minutes from its own clock, the same window a collection gives a report; a stale one is a replay. The library's `checkCallback` checks the signature and that window together. A place that takes no calls misses nothing: the same changes are in `read.moves`.
 
 ## ERC-8004
 
@@ -354,7 +369,18 @@ content-type: application/json
 
 Each report is the single request's body plus its `token`, signed on its own line exactly as above. Nothing about the line changes, so a place that already sends one at a time builds a batch by collecting what it would have sent.
 
-The answer is `200` with one entry per report, in the order sent: `{"token":947,"value":{...}}` where the single request would have answered 200, or `{"token":947,"status":403,"error":"forbidden","message":"..."}` where it would have refused. One bad report never fails the rest. A batch counts once against the ten a minute, and a body that isn't a list of 1 to 100 reports is a `400`.
+The answer is `200` with one entry per report under `value`, in the order sent: `{"token":947,"value":{...}}` where the single request would have answered 200, or `{"token":5,"status":403,"error":"forbidden","message":"..."}` where it would have refused. The whole body, for a batch of two:
+
+```json
+{
+  "value": [
+    { "token": 947, "value": { "id": 947, "place": "flock", "linked": true } },
+    { "token": 5, "status": 403, "error": "forbidden", "message": "..." }
+  ]
+}
+```
+
+With `?dry=1` the same body comes back with `"dry": true` beside `value`. One bad report never fails the rest. A batch counts once against the ten a minute, and a body that isn't a list of 1 to 100 reports is a `400`.
 
 ## Being a good sender
 
@@ -384,7 +410,7 @@ Anyone can check a report against those. A place with no registered address is a
 A collection keeps its registry as data, so adding a place is an approval, not a release. To be added, a place:
 
 1. Serves its own file at `/.well-known/agent-places.json` (see A place's own file, above), each key signing for its id at its origin.
-2. Sends its origin to the collection's `register`. For the Muses that is `POST https://musegod.org/api/v1/places` with `{"origin":"https://agora.example"}`. The collection reads the file there and checks it at once: a file that isn't sound is answered `400` with what to fix, and a sound one `202`, waiting for a person to approve it.
+2. Sends its origin to the collection's `register`. For the Muses that is `POST https://musegod.org/api/v1/places` with `{"origin":"https://agora.example"}`. The collection reads the file there and checks it at once: a file that isn't sound is answered `400` with what to fix, and a sound one `202`, waiting for a person to approve it. A file that says only what is live already (the same keys a live place reports with) is answered `200` with `"news": "unchanged"`, and nothing waits on anyone. A file the collection can't read is a `422` saying what it got: the status, a redirect (the file is read at that exact address, never one it moves to) or why the fetch failed. An id another origin holds is a `409`.
 3. Reads where it stands at `read.places` ([https://musegod.org/api/v1/places](https://musegod.org/api/v1/places)): `asked`, then `live` once approved, or `declined`.
 
 From the moment it is `live` its reports are taken, it is listed in the collection's file, and the tokens living there show it. Nothing is deployed for it. A collection may take a place off again (`revoked`), after which its reports are refused. `npx agent-places check <origin>` runs the same checks on a file before it is sent, and `npx agent-places register <collection> <origin>` checks it and sends it.
@@ -426,7 +452,7 @@ A collection that wants places to report to it needs one endpoint, a registry of
 2. A key is registered for that place. If not, answer 403 and stop.
 3. `at` is a whole number within ten minutes of now.
 4. `signer` is an address, and it is one of the keys registered for that place.
-5. `url` matches the pattern held for that place.
+5. `url` matches the pattern held for that place, and where the pattern names a `token` group, the group equals the token reported.
 6. The signature recovers to `signer` over the line rebuilt from the body's own fields, in the form the body asks for (`asset` given, or not).
 7. Only then read the holder from the chain, and store the report.
 8. Fold it into the record and log its line, unless it was a dry run.
@@ -439,7 +465,7 @@ Keep the crawl. A place can lose a report, a deployment can go down with its que
 
 Within 0.1 every change is additive: a new field, a new event, a new place, a new collection running its half. Nothing a place sends today stops working. A change to the meaning of a line or an event would be 0.2, named in the collection's file, with 0.1 still answered beside it.
 
-What 0.1 has grown so far, each without breaking a place that was already sending: the `active` and `did` events, each token's record, the CAIP-19 line, two keys a place while it rotates, a place's own file and its directory fields, the holder's opt-out, calls both ways, the agent file's `agent-places` service, the dry run, unchanged answers and each place's health read, the registry and its `register` endpoint, reports landing at once, the moves and happenings feeds and the log.
+What 0.1 has grown so far, each without breaking a place that was already sending: the `active` and `did` events, each token's record, the CAIP-19 line, two keys a place while it rotates, a place's own file and its directory fields, the holder's opt-out, calls both ways, the agent file's `agent-places` service, the dry run, unchanged answers and each place's health read, the registry and its `register` endpoint, reports landing at once, the moves and happenings feeds and the log, a place's `unit` for its `week`, the page pattern's `token` group, and a callback's freshness window.
 
 Proposed next, not live yet:
 

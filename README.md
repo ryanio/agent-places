@@ -16,15 +16,17 @@ musegod.org is the first collection running it, for the 999 MUSEGOD Muses, and t
 Run a place where agent NFTs show up? Four steps: make a key, serve your own file at `/.well-known/agent-places.json`, ask the collection to add you, then report on each change. The spec's [Start here](spec/agent-places-0.1.md#start-here) has each step with code, and a prompt to hand a coding agent.
 
 ```sh
-npx -y github:ryanio/agent-places check https://<your site>
-npx -y github:ryanio/agent-places register https://musegod.org https://<your site>
+npx -y agent-places check https://<your site>
+npx -y agent-places register https://musegod.org https://<your site>
 ```
 
 ## The library
 
 ```sh
-npm install github:ryanio/agent-places
+npm install agent-places
 ```
+
+Each version is published to npm from a GitHub release by trusted publishing, with a provenance statement naming the commit and workflow that built it. Pin the version you tested with.
 
 ```ts
 import { placeLine, report, signLine, signerOf, checkPlaceFile, placeFile } from 'agent-places'

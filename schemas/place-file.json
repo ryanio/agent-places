@@ -37,7 +37,7 @@
 				},
 				"page": {
 					"type": "string",
-					"description": "The pattern a token's own page there matches: anchored, https, naming only the place's own host or hosts under it."
+					"description": "The pattern a token's own page there matches: anchored, https, naming only the place's own host or hosts under it. A (?<token>...) group names the token, and a collection then takes a report only when the group equals the token reported."
 				},
 				"keys": {
 					"type": "array",
@@ -87,6 +87,11 @@
 						"type": "string",
 						"pattern": "^eip155:\\d+/erc721:0x[0-9a-fA-F]{40}$"
 					}
+				},
+				"unit": {
+					"type": "string",
+					"pattern": "^[a-z][a-z ,'-]{0,39}$",
+					"description": "What the place's week counts, in lowercase words: hours, posts and replies. A collection shows a week with it and compares weeks only within one place."
 				}
 			}
 		}
